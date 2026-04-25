@@ -1,0 +1,26 @@
+name: Mod Support Request
+description: Request GUI support for a specific mod
+labels: ["enhancement"]
+body:
+  - type: input
+    id: mod-name
+    attributes:
+      label: Mod name
+      placeholder: e.g., L_Ender's Cataclysm
+    validations:
+      required: true
+  - type: input
+    id: download-link
+    attributes:
+      label: Mod download link
+      placeholder: https://curseforge.com/minecraft/...
+  - type: textarea
+    id: gui-screens
+    attributes:
+      label: Which GUI screen(s) need support?
+      placeholder: e.g., crafting table, fusion GUI, etc.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      placeholder: Any existing textures? Type "None" if none.
