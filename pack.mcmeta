@@ -1,0 +1,20 @@
+{
+    "pack": {
+		"description": "§cBeta V0.1 §8| By Bronzeror",
+
+        "pack_format": 15,
+        "supported_formats": [15, 99],
+        "min_format": 15,
+        "max_format": 99
+    },
+    "overlays": {
+        "entries": [
+            {
+				"directory": "_1.21.6_shaders",
+                "formats": [57, 100], 
+                "min_format": 57, 
+                "max_format": 100
+            }
+        ]
+    }
+}
