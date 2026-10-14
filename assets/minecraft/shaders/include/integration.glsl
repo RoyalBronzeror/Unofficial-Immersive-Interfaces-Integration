@@ -10,6 +10,10 @@ bool posInRectY(vec3 position, vec2 screen, float offset, float size) {
     return position.y >= rectMin && position.y <= rectMax;
 }
 
+bool posCheckY(vec3 position,vec2 screen, float offset,float size) {
+    return ( abs( (round(screen.y/2)+offset+(size*corners[gl_VertexID % 4].y)) - position.y )<= margin );
+}
+
 float sliceX(float texCoordX, float cornerX, float atlasW, float spriteW, float a, float b) {
     float spriteUV = spriteW / atlasW;
     float baseX = texCoordX - cornerX * spriteUV;
@@ -121,13 +125,19 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                 
                 }
                 
-                else return Data(vec3(-1000.0, -1000.0, 0.0), texCoord, vec4(0));
+                else return null;
             
             }
             
-            if (color.g == 255) { // Enchant Button
+            if (color.g == 4) { // Enchant Button
             
-                // pos.xy += (corner - 0.5) * 2 * vec2(100, 100);
+                // The Advanced
+                if (posCheckY(Position, screen, -49, 18)) texCoord.x = sliceX(texCoord.x, corner.x, atlasSize.x, 316.0, 0.5, 1.0);
+                
+                // The Basic
+                if (posCheckY(Position, screen, -38, 18)) texCoord.x = sliceX(texCoord.x, corner.x, atlasSize.x, 316.0, 0.0, 0.5);
+                
+                pos.xy += (corner - 0.5) * 2 * vec2(70);
             
             }
         
@@ -135,9 +145,9 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
         
         // if (color.r == 253) {
         
-            // if (color.g == 255) {
+            // if (color.g == 4) {
             
-                // pos.xy += (corner - 0.5) * 2 * vec2(100, 100);
+                // pos.xy += (corner - 0.5) * 2 * vec2(70);
             
             // }
         
