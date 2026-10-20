@@ -33,6 +33,8 @@ vec2 sliceUV(vec2 texCoord, vec2 corner, vec2 atlasSize, vec2 spriteSize, vec2 a
     );
 }
 
+
+
 Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position, vec2 texCoord0) {
     
     vec3 pos = Position;
@@ -48,16 +50,18 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     
     vec2 screen = 2 / vec2(ProjMat[0][0], -ProjMat[1][1]);
     
+    vec2 signs = (corner - 0.5) * 2;
+    
     if (color.a == 1) { // Panels
     
         if (color.r == 255) { // Nomal Large
         
-            pos.xy += ((corner - 0.5) * 2 * vec2(176, 166));
+            pos.xy += (signs * vec2(176, 166));
                     
         }
         if (color.r == 254) { // Enchanting Infuser Size
         
-            pos.xy += ((corner - 0.5) * 2 * vec2(220, 185));
+            pos.xy += (signs * vec2(220, 185));
                     
         }
     
@@ -86,15 +90,60 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
             }
             
             if (color.g == 1) { // Infuser Scroller
-            
-                // pos.xy += (corner - 0.5) * 2 * vec2(10, 10);
+                
+                //=====Infuser Scroller=====
                 
                 if (posCheckX(Position, screen, 88, 12)) {
-            
+                
+                    if (color.b == 255) { // Disabled
                     
-            
+                        pos.xy += signs * vec2(14, 35);
+                        texCoord = sliceUV(texCoord, corner, atlasSize, vec2(40.0, 100.0), vec2(0.0, 15.0 / 100.0), vec2(1.0));
+                    
+                    }
+                    
+                    else if (color.b == 254) { // Enabled
+                    
+                        pos.xy += signs * vec2(12, 27.5);
+                        
+                        float topY = Position.y - corner.y * 15.0 - screen.y * 0.5;
+                        
+                        float index = floor(topY - (-75.0));
+                        index = clamp(index, 0.0, 55.0);
+                        
+                        float cols = mod(index, 8.0);
+                        float rows = floor(index / 8.0);
+                        
+                        float frameColStart = (cols * 36.0) / 288.0;
+                        float frameRowStart = (rows * 70.0) / 490.0;
+                        float frameColEnd = ((cols + 1.0) * 36.0) / 288.0;
+                        float frameRowEnd = ((rows + 1.0) * 70.0) / 490.0;
+                        
+                        if (index == 0.0) {
+                        
+                            texCoord = sliceUV(texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(0.0), vec2(26.0 / 288.0, 50.0 / 490.0));
+                            pos.xy -= signs * vec2(5, 10);
+                            pos.x -= 5.0;
+                            pos.y -= 10.0;
+                        
+                        }
+                        else texCoord = sliceUV(texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(frameColStart, frameRowStart), vec2(frameColEnd, frameRowEnd));
+                        
+                        pos.y += 27.5 - index;
+                        
+                    }
+                
                 }
-                            
+                
+                //=====Vanilla Scroller=====
+                
+                // Disabled
+                else if (color.b == 255) texCoord = sliceUV(texCoord, corner, atlasSize, vec2(40.0, 100.0), vec2(14.0 / 40.0, 0.0), vec2(26.0 / 40.0, 15.0 / 100.0));
+                
+                // Enabled
+                else if (color.b == 254) texCoord = sliceUV(texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(24.0 / 288.0, 55.0 / 490.0), vec2(36.0 / 288.0, 70.0 / 490.0));
+               
+            
             }
             
             if (color.g == 2) { // Infuser Add/Remove Button
@@ -137,21 +186,13 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                 // The Basic
                 if (posCheckY(Position, screen, -38, 18)) texCoord.x = sliceX(texCoord.x, corner.x, atlasSize.x, 316.0, 0.0, 0.5);
                 
-                pos.xy += (corner - 0.5) * 2 * vec2(70);
+                pos.xy += signs * vec2(70);
             
             }
+            
+            if (color.g == 5) pos.xy += signs * vec2(2); // Repair Button
         
         }
-        
-        // if (color.r == 253) {
-        
-            // if (color.g == 4) {
-            
-                // pos.xy += (corner - 0.5) * 2 * vec2(70);
-            
-            // }
-        
-        // }
     
     }
     
