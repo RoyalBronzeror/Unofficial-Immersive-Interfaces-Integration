@@ -1,3 +1,10 @@
+//==========Globals==========
+
+vec2 g_atlasSize;
+vec2 g_corner;
+
+//==========Utils==========
+
 bool posInRectX(vec3 position, vec2 screen, float offset, float size) {
     float rectMin = screen.x * 0.5 + offset;
     float rectMax = rectMin + size;
@@ -13,6 +20,8 @@ bool posInRectY(vec3 position, vec2 screen, float offset, float size) {
 bool posCheckY(vec3 position,vec2 screen, float offset,float size) {
     return ( abs( (round(screen.y/2)+offset+(size*corners[gl_VertexID % 4].y)) - position.y )<= margin );
 }
+
+//==========
 
 float sliceX(float texCoordX, float cornerX, float atlasW, float spriteW, float a, float b) {
     float spriteUV = spriteW / atlasW;
@@ -33,7 +42,17 @@ vec2 sliceUV(vec2 texCoord, vec2 corner, vec2 atlasSize, vec2 spriteSize, vec2 a
     );
 }
 
+//==========
 
+void remap(inout vec2 texCoord, vec4 pointer) { // Only for versions prior to 1.21.2
+    
+    vec2 uvMin = pointer.xy / g_atlasSize;
+    vec2 uvMax = pointer.zw / g_atlasSize;
+    texCoord = mix(uvMin, uvMax, g_corner);
+    
+}
+
+//==========Main==========
 
 Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position, vec2 texCoord0) {
     
@@ -42,15 +61,29 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     
     int vertID = gl_VertexID % 4;
     vec2 corner = corners[vertID];
+    g_corner = corner;
     
     vec2 atlasSize = textureSize(Sampler0, 0);
+    g_atlasSize = atlasSize;
+    
     vec2 pixelSize = 1.0 / atlasSize; // One Pixel Size
     vec2 offsetBias = pixelSize * 0.5 * corner;
     vec4 color = round(texture(Sampler0, texCoord0 - offsetBias) * 255.0);
     
+    vec2 inwardOffset = pixelSize * ((1.0 - 2.0 * corner) + vec2(0.5, 0.5)); 
+    ivec4 cmdColor = ivec4(round(texture(Sampler0, texCoord0 + inwardOffset) * 255.0));
+    
+    ivec2 bottomRight = ivec2(g_atlasSize) - ivec2(1, 1);
+    ivec4 cornerPixel = ivec4(round(texelFetch(Sampler0, bottomRight, 0) * 255.0));
+    // Handles texCoord scaling for older versions of the entire GUI texture
+    
     vec2 screen = 2 / vec2(ProjMat[0][0], -ProjMat[1][1]);
     
     vec2 signs = (corner - 0.5) * 2;
+    
+    if (cornerPixel == vec4(255, 0, 0, 255)) texCoord.y = texCoord.y * 0.6;
+    
+    // if (atlasSize == vec2(768,1280)) texCoord.y = texCoord.y * 0.6;
     
     if (color.a == 1) { // Panels
     
@@ -59,10 +92,54 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
             pos.xy += (signs * vec2(176, 166));
                     
         }
+        
         if (color.r == 254) { // Enchanting Infuser Size
         
             pos.xy += (signs * vec2(220, 185));
                     
+        }
+    
+    }
+    
+    if (cmdColor.a == 1 && !(color.a == 1 && color.r == 254)) { // Old Version Atlas Sprites Pointing
+    
+        if (cmdColor.r == 254) { // Enchanting Infuser 1.21.2
+        
+            switch (cmdColor.g) {
+            
+                case 0: // Infuser Button
+                    
+                    if (cmdColor.b == 0) remap(texCoord, vec4(0.0, 753.0, 160.0, 879.0));
+                    if (cmdColor.b == 1) remap(texCoord, vec4(160.0, 753.0, 320.0, 879.0));
+                    if (cmdColor.b == 2) remap(texCoord, vec4(320.0, 753.0, 480.0, 879.0));
+                    
+                    break;
+                case 2: // Infuser Add/Remove Button
+                    
+                    if (cmdColor.b == 0) remap(texCoord, vec4(0.0, 717.0, 36.0, 753.0));
+                    if (cmdColor.b == 1) remap(texCoord, vec4(36.0, 717.0, 72.0, 753.0));
+                    if (cmdColor.b == 2) remap(texCoord, vec4(72.0, 717.0, 108.0, 753.0));
+                    if (cmdColor.b == 3) remap(texCoord, vec4(108.0, 717.0, 144.0, 753.0));
+                    if (cmdColor.b == 4) remap(texCoord, vec4(144.0, 717.0, 180.0, 753.0));
+                    if (cmdColor.b == 5) remap(texCoord, vec4(180.0, 717.0, 216.0, 753.0));
+
+                    break;
+                case 4: // Enchant Button
+                    
+                    if (cmdColor.b == 0) remap(texCoord, vec4(0.0, 879.0, 316.0, 1037.0));
+                    if (cmdColor.b == 1) remap(texCoord, vec4(316.0, 879.0, 632.0, 1037.0));
+                    if (cmdColor.b == 2) remap(texCoord, vec4(0.0, 1037.0, 316.0, 1159.0));
+                    
+                    break;
+                case 5: // Repair Button
+                    
+                    if (cmdColor.b == 0) remap(texCoord, vec4(216.0, 717.0, 242.0, 743.0));
+                    if (cmdColor.b == 1) remap(texCoord, vec4(216.0, 717.0, 242.0, 743.0));
+                    if (cmdColor.b == 2) remap(texCoord, vec4(242.0, 717.0, 268.0, 743.0));
+                    
+                    break;
+            }
+        
         }
     
     }
@@ -190,7 +267,7 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
             
             }
             
-            if (color.g == 5) pos.xy += signs * vec2(2); // Repair Button
+            if (color.g == 5) pos.xy += signs * vec2(4); // Repair Button
         
         }
     
