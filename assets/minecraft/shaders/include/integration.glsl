@@ -86,29 +86,28 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     
     if (cornerPixel == ivec4(255, 0, 0, 255)) g_texCoord = g_texCoord * 0.6;
     
-    
     vec2 pixelSize = 1.0 / atlasSize; // One Pixel Size
     vec2 offsetBias = pixelSize * 0.5 * corner;
-    vec4 color = round(texture(Sampler0, texCoord - offsetBias) * 255.0);
+    vec4 color = round(texture(Sampler0, g_texCoord - offsetBias) * 255.0);
     
     vec2 inwardOffset = pixelSize * (1.0 - 2.0 * corner) * 1.5; 
-    ivec4 cmdColor = ivec4(round(texture(Sampler0, texCoord + inwardOffset) * 255.0));
-    
-    
+    ivec4 cmdColor = ivec4(round(texture(Sampler0, g_texCoord + inwardOffset) * 255.0));
     
     vec2 screen = 2 / vec2(ProjMat[0][0], -ProjMat[1][1]);
     
     vec2 signs = (corner - 0.5) * 2;
-        
-    if (color.a == 1) { // Panels
     
-        if (color.r == 255) { // Nomal Large
+    // if (atlasSize == vec2(768,1280)) texCoord.y = texCoord.y * 0.6;
+    
+    if (colorMatches(3, 1, 0.0, Sampler0)) { // Panels
+    
+        if (colorMatches(0, 255, 0.0, Sampler0)) { // Nomal Large
         
             pos.xy += (signs * vec2(176, 166));
                     
         }
         
-        if (color.r == 254) { // Enchanting Infuser Size
+        if (colorMatches(0, 254, 0.0, Sampler0)) { // Enchanting Infuser Size
         
             pos.xy += (signs * vec2(220, 185));
                     
@@ -116,7 +115,7 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     
     }
     
-    if (cmdColor.a == 1 && !(color.a == 1 && color.r == 254)) { // Old Version Atlas Sprites Pointing
+    if (cmdColor.a == 1) { // Old Version Atlas Sprites Pointing
     
         if (cmdColor.r == 254) { // Enchanting Infuser 1.21.2
         
@@ -150,7 +149,7 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                     
                     if (cmdColor.b == 0) remap(g_texCoord, vec4(0.0, 879.0, 316.0, 1037.0));
                     if (cmdColor.b == 1) remap(g_texCoord, vec4(316.0, 879.0, 632.0, 1037.0));
-                    if (cmdColor.b == 2) remap(g_texCoord, vec4(0.0, 1037.0, 316.0, 1159.0));
+                    if (cmdColor.b == 2) remap(g_texCoord, vec4(0.0, 1037.0, 316.0, 1195.0));
                     
                     break;
                 case 5: // Repair Button
@@ -171,7 +170,9 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
         if (colorMatches(0, 254, 0.0, Sampler0)) { // Enchanting Infuser
         
             if (colorMatches(1, 0, 0.0, Sampler0)) { // Infuser Button
-    
+            
+                if (cornerPixel == ivec4(255, 0, 0, 255)) pos.z += 0.01;
+                
                 // Align all four vertices to the top of the row (relative to screen center)
                 float rowTopY = Position.y - corner.y * 18.0 - screen.y * 0.5;
             
@@ -241,11 +242,12 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                 
                 // Enabled
                 else if (colorMatches(2, 254, 0.0, Sampler0)) g_texCoord = sliceUV(g_texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(24.0 / 288.0, 55.0 / 490.0), vec2(36.0 / 288.0, 70.0 / 490.0));
-               
             
             }
             
             if (colorMatches(1, 2, 0.0, Sampler0)) { // Infuser Add/Remove Button
+                
+                if (cornerPixel == ivec4(255, 0, 0, 255)) pos.z += 0.01;
                 
                 float rowTopY = Position.y - corner.y * 18.0 - screen.y * 0.5;
                 if (rowTopY >= -31.0) g_texCoord.x = sliceX(g_texCoord.x, corner.x, atlasSize.x, 36.0, 0.5, 1.0);
