@@ -45,11 +45,11 @@ vec2 sliceUV(vec2 texCoord, vec2 corner, vec2 atlasSize, vec2 spriteSize, vec2 a
 
 //==========
 
-void remap(inout vec2 texCoord, vec4 pointer) { // Only for versions prior to 1.21.2
+void remap(vec4 pointer) { // Only for versions prior to 1.21.2
     
     vec2 uvMin = pointer.xy / g_atlasSize;
     vec2 uvMax = pointer.zw / g_atlasSize;
-    texCoord = mix(uvMin, uvMax, g_corner);
+    g_texCoord = mix(uvMin, uvMax, g_corner);
     
 }
 
@@ -79,12 +79,11 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     vec2 atlasSize = textureSize(Sampler0, 0);
     g_atlasSize = atlasSize;
     
-    
     ivec2 bottomRight = ivec2(g_atlasSize) - ivec2(1, 1);
     ivec4 cornerPixel = ivec4(round(texelFetch(Sampler0, bottomRight, 0) * 255.0));
     // Handles texCoord scaling for older versions of the entire GUI texture
     
-    if (cornerPixel == ivec4(255, 0, 0, 255)) g_texCoord = g_texCoord * 0.6;
+    if (cornerPixel == ivec4(255, 0, 0, 255) || cornerPixel == ivec4(255, 1, 0, 255)) g_texCoord = g_texCoord * 0.6;
     
     vec2 pixelSize = 1.0 / atlasSize; // One Pixel Size
     vec2 offsetBias = pixelSize * 0.5 * corner;
@@ -96,8 +95,6 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     vec2 screen = 2 / vec2(ProjMat[0][0], -ProjMat[1][1]);
     
     vec2 signs = (corner - 0.5) * 2;
-    
-    // if (atlasSize == vec2(768,1280)) texCoord.y = texCoord.y * 0.6;
     
     if (colorMatches(3, 1, 0.0, Sampler0)) { // Panels
     
@@ -117,46 +114,62 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
     
     if (cmdColor.a == 1) { // Old Version Atlas Sprites Pointing
     
-        if (cmdColor.r == 254) { // Enchanting Infuser 1.21.2
+        if (cmdColor.r == 254) { // Enchanting Infuser before 1.21.2
         
             switch (cmdColor.g) {
             
                 case 0: // Infuser Button
                     
-                    if (cmdColor.b == 0) remap(g_texCoord, vec4(0.0, 753.0, 160.0, 879.0));
-                    if (cmdColor.b == 1) remap(g_texCoord, vec4(160.0, 753.0, 320.0, 879.0));
-                    if (cmdColor.b == 2) remap(g_texCoord, vec4(320.0, 753.0, 480.0, 879.0));
+                    if (cmdColor.b == 0) remap(vec4(0.0, 753.0, 160.0, 879.0));
+                    if (cmdColor.b == 1) remap(vec4(160.0, 753.0, 320.0, 879.0));
+                    if (cmdColor.b == 2) remap(vec4(320.0, 753.0, 480.0, 879.0));
                     
                     break;
-                case 1: // Infuser Scroller
+                case 1: // Infuser Scroller before 1.21
                     
-                    pos.xy -= (signs * vec2(3.0, 1.5)); // 18*18 --> 12*15
-                    if (cmdColor.b == 0) remap(g_texCoord, vec4(660.0, 270.0, 700.0, 370.0));
-                    if (cmdColor.b == 1) remap(g_texCoord, vec4(700.0, 270.0, 988.0, 760.0));
+                    // 18*18 --> 12*15
+                    Position.x -= signs.x * 3.0;
+                    if (corner.y == 0.0) Position.y += 1.0;
+                    if (corner.y == 1.0) Position.y -= 2.0;
+                    pos = Position;
+                    
+                    if (cmdColor.b == 0) remap(vec4(660.0, 270.0, 700.0, 370.0));
+                    if (cmdColor.b == 1) remap(vec4(700.0, 270.0, 988.0, 760.0));
                     
                     break;
                 case 2: // Infuser Add/Remove Button
+                    if (cornerPixel == ivec4(255, 1, 0, 255)) {
+                        pos.z += 5;
+                        // return Data(pos,g_texCoord,vec4(0));
+                    }
+                    if (cmdColor.b == 0) remap(vec4(0.0, 717.0, 36.0, 753.0));
+                    if (cmdColor.b == 1) remap(vec4(36.0, 717.0, 72.0, 753.0));
+                    if (cmdColor.b == 2) remap(vec4(72.0, 717.0, 108.0, 753.0));
+                    if (cmdColor.b == 3) remap(vec4(108.0, 717.0, 144.0, 753.0));
+                    if (cmdColor.b == 4) remap(vec4(144.0, 717.0, 180.0, 753.0));
+                    if (cmdColor.b == 5) remap(vec4(180.0, 717.0, 216.0, 753.0));
                     
-                    if (cmdColor.b == 0) remap(g_texCoord, vec4(0.0, 717.0, 36.0, 753.0));
-                    if (cmdColor.b == 1) remap(g_texCoord, vec4(36.0, 717.0, 72.0, 753.0));
-                    if (cmdColor.b == 2) remap(g_texCoord, vec4(72.0, 717.0, 108.0, 753.0));
-                    if (cmdColor.b == 3) remap(g_texCoord, vec4(108.0, 717.0, 144.0, 753.0));
-                    if (cmdColor.b == 4) remap(g_texCoord, vec4(144.0, 717.0, 180.0, 753.0));
-                    if (cmdColor.b == 5) remap(g_texCoord, vec4(180.0, 717.0, 216.0, 753.0));
-
                     break;
                 case 4: // Enchant Button
                     
-                    if (cmdColor.b == 0) remap(g_texCoord, vec4(0.0, 879.0, 316.0, 1037.0));
-                    if (cmdColor.b == 1) remap(g_texCoord, vec4(316.0, 879.0, 632.0, 1037.0));
-                    if (cmdColor.b == 2) remap(g_texCoord, vec4(0.0, 1037.0, 316.0, 1195.0));
+                    if (cmdColor.b == 0) remap(vec4(0.0, 879.0, 316.0, 1037.0));
+                    if (cmdColor.b == 1) remap(vec4(316.0, 879.0, 632.0, 1037.0));
+                    if (cmdColor.b == 2) remap(vec4(0.0, 1037.0, 316.0, 1195.0));
                     
                     break;
                 case 5: // Repair Button
                     
-                    if (cmdColor.b == 0) remap(g_texCoord, vec4(216.0, 717.0, 242.0, 743.0));
-                    if (cmdColor.b == 1) remap(g_texCoord, vec4(216.0, 717.0, 242.0, 743.0));
-                    if (cmdColor.b == 2) remap(g_texCoord, vec4(242.0, 717.0, 268.0, 743.0));
+                    if (cmdColor.b == 0) remap(vec4(216.0, 717.0, 242.0, 743.0));
+                    if (cmdColor.b == 1) remap(vec4(216.0, 717.0, 242.0, 743.0));
+                    if (cmdColor.b == 2) remap(vec4(242.0, 717.0, 268.0, 743.0));
+                    
+                    break;
+                case 6: // Infuser Button before 1.21
+                    
+                    pos.x += (signs.x * 17.0);
+                    if (cmdColor.b == 0) remap(vec4(0.0, 753.0, 160.0, 879.0));
+                    if (cmdColor.b == 1) remap(vec4(160.0, 753.0, 320.0, 879.0));
+                    if (cmdColor.b == 2) remap(vec4(320.0, 753.0, 480.0, 879.0));
                     
                     break;
             }
@@ -171,7 +184,7 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
         
             if (colorMatches(1, 0, 0.0, Sampler0)) { // Infuser Button
             
-                if (cornerPixel == ivec4(255, 0, 0, 255)) pos.z += 0.01;
+                if (cornerPixel == ivec4(255, 0, 0, 255) || cornerPixel == ivec4(255, 1, 0, 255)) pos.z += 0.01;
                 
                 // Align all four vertices to the top of the row (relative to screen center)
                 float rowTopY = Position.y - corner.y * 18.0 - screen.y * 0.5;
@@ -211,6 +224,10 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                         float index = floor(topY - (-75.0));
                         index = clamp(index, 0.0, 55.0);
                         
+                        // Before 1.21
+                        if (topY < -75.0) pos.y += index - (topY - (-75.0));
+                        if (topY > -20.0) pos.y -= (topY - (-75.0)) - index;
+                        
                         float cols = mod(index, 8.0);
                         float rows = floor(index / 8.0);
                         
@@ -222,11 +239,12 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                         if (index == 0.0) {
                         
                             g_texCoord = sliceUV(g_texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(0.0), vec2(26.0 / 288.0, 50.0 / 490.0));
-                            pos.xy -= signs * vec2(5, 10);
+                            pos.xy -= signs * vec2(5.0, 10.0);
                             pos.x -= 5.0;
                             pos.y -= 10.0;
                         
                         }
+                        
                         else g_texCoord = sliceUV(g_texCoord, corner, atlasSize, vec2(288.0, 490.0), vec2(frameColStart, frameRowStart), vec2(frameColEnd, frameRowEnd));
                         
                         pos.y += 27.5 - index;
@@ -247,7 +265,7 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
             
             if (colorMatches(1, 2, 0.0, Sampler0)) { // Infuser Add/Remove Button
                 
-                if (cornerPixel == ivec4(255, 0, 0, 255)) pos.z += 0.01;
+                if (cornerPixel == ivec4(255, 0, 0, 255) || cornerPixel == ivec4(255, 1, 0, 255)) pos.z += 5.0;
                 
                 float rowTopY = Position.y - corner.y * 18.0 - screen.y * 0.5;
                 if (rowTopY >= -31.0) g_texCoord.x = sliceX(g_texCoord.x, corner.x, atlasSize.x, 36.0, 0.5, 1.0);
@@ -255,23 +273,34 @@ Data integration(mat4 ProjMat, float GameTime, sampler2D Sampler0, vec3 Position
                 
                 // ==========
                 
-                if (posCheckX(Position, screen, 62, 18) || posCheckX(Position, screen, -80, 18)) { // Without shift
+                // Uniform offset before 1.21
+                if (posCheckX(Position, screen, 63, 18) || posCheckX(Position, screen, 60, 18)) pos.x -= 1.0;
+                if (posCheckX(Position, screen, -78, 18) || posCheckX(Position, screen, -81, 18)) pos.x += 1.0;
+                
+                // ==========
+                
+                if (
+                    posCheckX(Position, screen, 62, 18) || posCheckX(Position, screen, -80, 18) ||
+                    posCheckX(Position, screen, 63, 18) || posCheckX(Position, screen, -81, 18) // Before 1.21
+                ) { // Without shift
                 
                     g_texCoord.y = sliceY(g_texCoord.y, corner.y, atlasSize.y, 36.0, 0.5, 1.0);
                 
                 }
                 
-                else if (posCheckX(Position, screen, 59, 18)) {  // With shift Right Button
+                else if (posCheckX(Position, screen, 59, 18) || posCheckX(Position, screen, 61, 18)) {  // With shift Right Button
                 
                     g_texCoord.y = sliceY(g_texCoord.y, corner.y, atlasSize.y, 36.0, 0.0, 0.5);
                     pos.x += 3.0;
+                    if (posCheckX(Position, screen, 61, 18)) pos.x -= 2.0;
                 
                 }
                 
-                else if (posCheckX(Position, screen, -77, 18)) {  // With shift Left Button
+                else if (posCheckX(Position, screen, -77, 18) || posCheckX(Position, screen, -79, 18)) {  // With shift Left Button
                 
                     g_texCoord.y = sliceY(g_texCoord.y, corner.y, atlasSize.y, 36.0, 0.0, 0.5);
                     pos.x -= 3.0;
+                    if (posCheckX(Position, screen, -79, 18)) pos.x += 2.0;
                 
                 }
                 
